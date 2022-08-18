@@ -1,0 +1,82 @@
+version: '3'
+services:
+#**********************Jenkins***************************************
+  jenkins:
+    image: jenkins/jenkins:lts
+    privileged: true
+    user: root
+    ports:
+     - "8080:8080"
+    container_name: jenkins
+    volumes:
+     - jenkins-docker-certs:/certs/client
+     - jenkins-data:/var/jenkins_home
+     - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+       - SE-network
+#**********************Nexus***************************************
+  nexus:
+    image: sonatype/nexus3
+    container_name: nexus
+    expose:
+      - 8081
+      - 8082
+      - 8083
+    ports:
+      - "8081:8081"
+      - "8082:8082"
+      - "8083:8083"
+    volumes:
+      - "nexus_data:/nexus-data"
+    restart: unless-stopped
+    networks:
+      - SE-network
+#**********************Sonar***************************************
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonar
+    depends_on:
+      - dbsonar
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://dbsonar/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    restart: unless-stopped
+    ports:
+      - "8084:9000"
+    networks:
+      - SE-network
+#**********************Postgres-Sonar***************************************
+  dbsonar:
+    image: postgres:12
+    container_name: postgresonar
+    ports:
+      - "8085:5432"
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+    volumes:
+      - postgresql_sonar:/var/lib/postgresql
+      - postgresql_sonar_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - SE-network
+
+
+volumes:
+  jenkins-docker-certs:
+  jenkins-data:
+  nexus_data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  postgresql_sonar:
+  postgresql_sonar_data:
+#------------------------Network-----------------------------------------------
+networks:
+  SE-network:
