@@ -1,8 +1,0 @@
-server:
-  port: 9001
-
-spring:
-  application:
-    name: DEPARTMENT-MICROSERVICE
-  zipkin:
-    base-url: http://127.0.0.1:9411/
